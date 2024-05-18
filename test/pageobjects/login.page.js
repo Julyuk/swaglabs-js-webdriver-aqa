@@ -34,6 +34,14 @@ class LoginPage extends Page {
         return $('//div[contains(@class,"login_password")]');
     }
 
+    get errorMsg(){
+        return $('//h3[@data-test="error"]')
+    }
+
+    get errorIcons(){
+        return $$('svg.error_icon')
+    }
+
     async getPasswordForAll(){
         const passwordElement = await this.passwordForAll;
         const passwordText = await passwordElement.getText();
@@ -61,7 +69,22 @@ class LoginPage extends Page {
         assert.strictEqual(passwordType, "password");
         await this.btnLogin.click();
     }
-
+    async assertInvalidLogin(){
+        const errorMsg = "Epic sadface: Username and password do not match any user in this service"
+        const actualErrorMsg = await (await this.errorMsg).getText();
+        assert.strictEqual(actualErrorMsg, errorMsg);
+        const errorIcons = await this.errorIcons;
+        assert.strictEqual(errorIcons.length, 2);
+        for (const icon of errorIcons) {
+        const isDisplayed = await icon.isDisplayed();
+        const iconColor = await (await icon.getCSSProperty('color')).value;
+        assert.strictEqual(isDisplayed, true);
+        assert.strictEqual(iconColor, "rgba(226,35,26,1)");
+         }
+        assert.strictEqual(await (await this.errorMsg).isDisplayed(), true)
+        assert.strictEqual((await (await this.inputUsername).getCSSProperty("border-bottom-color")).value, "rgba(226,35,26,1)")
+        assert.strictEqual((await (await this.inputPassword).getCSSProperty("border-bottom-color")).value, "rgba(226,35,26,1)") 
+    }
 }
 
 module.exports = new LoginPage();

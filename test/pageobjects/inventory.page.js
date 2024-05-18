@@ -1,6 +1,6 @@
 const { $ } = require('@wdio/globals')
 const Page = require('./page');
-
+const assert = require('assert');
 
 class InventoryPage extends Page {
   get btnCart() {
@@ -40,6 +40,26 @@ class InventoryPage extends Page {
   }
   getItemDescById(id) {
     return $(`(//div[@class="inventory_item_desc"])[${id + 1}]`);
+  }
+
+  async asssertInventoryPageCartAndItemsAreDisplayed(){
+    await browser.waitUntil(async () => {
+                 const cartIsDisplayed = await this.btnCart.isDisplayed()
+                 assert.strictEqual(cartIsDisplayed, true)
+                 return cartIsDisplayed
+             }, {
+                 timeout: 5000,
+                 timeoutMsg: 'expected inventory container to be displayed after 5s'
+             });
+             const itemsCount = await this.items.length
+             assert.strictEqual(itemsCount, 6)
+             for(let i = 0; i < await this.items.length; i++){
+                 assert.strictEqual(await (await this.getItemImageById(i)).isDisplayed(), true)
+                 assert.strictEqual(await (await this.getItemPriceById(i)).isDisplayed(), true)
+                 assert.strictEqual(await (await this.getItemBtnById(i)).isDisplayed(), true)
+                 assert.strictEqual(await (await this.getItemNameById(i)).isDisplayed(), true)
+                 assert.strictEqual(await (await this.getItemDescById(i)).isDisplayed(), true)    
+        }
   }
 
   get productsText() {}

@@ -239,7 +239,7 @@ describe('Inventory page', () => {
         await inventoryPage.clickAbout();
         inventoryPage.checkSocialLinkIsOpenedInANewTabAndSwitchToSite('https://saucelabs.com/')
     });
-    it.only('Reset app state', async () => { 
+    it('Reset app state', async () => { 
         const expectedQuantity = 1;
         await inventoryPage.getItemBtnById(0).click();
         assert.strictEqual(parseInt(await (await inventoryPage.itemsInCartBadge).getText()), expectedQuantity);
@@ -248,15 +248,17 @@ describe('Inventory page', () => {
         assert.strictEqual(await inventoryPage.cartItems, undefined);
         inventoryPage.asssertInventoryPageCartAndItemsAreDisplayed()
     });
-    it('Check "All items" link in the side menu', async () => { 
+    it('Check the "All items" link in the side menu', async () => { 
         await inventoryPage.getItemBtnById(0).click();
         await inventoryPage.clickBtnCart();
         await cartPage.assertCartPageIsDisplayed();
+        assert.strictEqual(parseInt(await (await cartPage.getItemQuantityById(0)).getText()), 1)
         await assertSideMenuIsDisplayed();
         cartPage.clickAllItems();
         await inventoryPage.asssertInventoryPageCartAndItemsAreDisplayed()
+        assert.strictEqual(parseInt(await (await inventoryPage.itemsInCartBadge).getText()), 1)
     });
-    it('Check "X" button in the side menu', async () => { 
+    it('Check the "X" button in the side menu', async () => { 
         await assertSideMenuIsDisplayed();
         await inventoryPage.clickXButton()
         await browser.waitUntil(

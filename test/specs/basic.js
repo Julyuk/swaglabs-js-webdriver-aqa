@@ -234,18 +234,19 @@ describe('Inventory page', () => {
         assert.strictEqual(await (await cartPage.errorMsg).getText(), "Cart is empty")
     });
 
-    it('Check "About" link in the side menu', async () => { 
+    it('Check the "About" link in the side menu', async () => { 
         await assertSideMenuIsDisplayed();
         await inventoryPage.clickAbout();
         inventoryPage.checkSocialLinkIsOpenedInANewTabAndSwitchToSite('https://saucelabs.com/')
     });
-    it('Reset app state', async () => { 
+    it.only('Reset app state', async () => { 
         const expectedQuantity = 1;
         await inventoryPage.getItemBtnById(0).click();
         assert.strictEqual(parseInt(await (await inventoryPage.itemsInCartBadge).getText()), expectedQuantity);
         await assertSideMenuIsDisplayed();
         await inventoryPage.clickResetAppState();
         assert.strictEqual(await inventoryPage.cartItems, undefined);
+        inventoryPage.asssertInventoryPageCartAndItemsAreDisplayed()
     });
     it('Check "All items" link in the side menu', async () => { 
         await inventoryPage.getItemBtnById(0).click();

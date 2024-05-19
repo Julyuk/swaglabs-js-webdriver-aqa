@@ -274,7 +274,7 @@ describe('Inventory page', () => {
        await inventoryPage.verifySideMenuIsClosed()
     });
     
-    it('Check "Continue shopping" button in the cart', async () => { 
+    it('Check the "Continue shopping" button in the cart', async () => { 
         const expectedQuantity = 1
         await inventoryPage.getItemBtnById(0).click()
         assert.strictEqual(parseInt(await (await inventoryPage.itemsInCartBadge).getText()), expectedQuantity);
@@ -287,7 +287,7 @@ describe('Inventory page', () => {
         await inventoryPage.clickResetAppState()
     });
 
-    it('Check product page and return back to products', async () => { 
+    it('Check a product page and return back to all products', async () => { 
         for(let i = 0; i < await inventoryPage.allItems.length; i++){
             let expectedPrice = await (await inventoryPage.getItemPriceById(i)).getText()
         let expectedDesc = await (await inventoryPage.getItemDescById(i)).getText()
@@ -383,7 +383,16 @@ describe('Checkout page', () => {
 
     it('Check "Cancel" button in the checkout page', async () => { 
         checkoutPage.clickCancel()
-        await cartPage.assertCartPageIsDisplayed();
+        await cartPage.assertCartPageIsDisplayed()
+        assert.strictEqual((await cartPage.cartItems.length), expectedQuantity)
+        assert.strictEqual(await (await cartPage.getItemNameById(0)).isDisplayed(), true)
+        assert.strictEqual(await (await cartPage.getItemNameById(0)).getText(), expectedName)
+        assert.strictEqual(await (await cartPage.getItemDescById(0)).isDisplayed(), true)
+        assert.strictEqual(await (await cartPage.getItemDescById(0)).getText(), expectedDesc)
+        assert.strictEqual(await (await cartPage.getItemPriceById(0)).isDisplayed(), true)
+        assert.strictEqual(await(await cartPage.getItemPriceById(0)).getText(), expectedPrice)
+        assert.strictEqual(await(await cartPage.getItemQuantityById(0)).isDisplayed(), true)
+        assert.strictEqual(parseInt(await(await cartPage.getItemQuantityById(0)).getText()), expectedQuantity)
     });
 
     it('Check "Cancel" button in the overview page', async () => { 

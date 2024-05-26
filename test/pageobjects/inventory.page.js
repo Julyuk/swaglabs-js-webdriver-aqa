@@ -49,6 +49,12 @@ class InventoryPage extends Page {
         }
   }
 
+  async ensureItemNotInCart(itemIndex) {
+    if(await(await this.getItemBtnById(itemIndex)).getText()==="Remove" 
+    && this.cartItems == undefined) {
+        await this.getItemBtnById(itemIndex).click();
+    }
+  }
 }
 
 module.exports = new InventoryPage();

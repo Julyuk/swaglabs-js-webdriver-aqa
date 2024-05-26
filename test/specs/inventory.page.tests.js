@@ -7,59 +7,14 @@ const overviewPage = require("../pageobjects/overview.page")
 const checkoutCompletePage = require('../pageobjects/checkout.complete.page')
 const productPage = require('../pageobjects/product.page')
 
-
-describe('Login page', () => {
-    beforeEach(async () => {
-        await loginPage.open()
-        await loginPage.verifyLoginPageIsOpened()
-    });
-
-    const loginAndAssert = async (username, password, expectedError = null) => {
-        await loginPage.login(username, password);
-        if (expectedError) {
-            await loginPage.assertInvalidLogin(expectedError);
-        } else {
-            await inventoryPage.asssertInventoryPageCartAndItemsAreDisplayed()
-        }
-    };
-
-    it('Valid Login', async () => {
-        await loginAndAssert(await loginPage.getAcceptedUsernameById(0), await loginPage.getPasswordForAll());
-    });
-
-    it('Login with invalid password', async () => {
-        const invalidPassword = await loginPage.generateRandomValue("number", 2, 5) + await loginPage.generateRandomValue("string", 3, 5);
-        await loginAndAssert(await loginPage.getAcceptedUsernameById(0), invalidPassword, loginPage.errorUsernameAndPwdDoNotMAtch);
-    });
-
-    it('Login with invalid login', async () => {
-        const invalidUsername = await loginPage.generateRandomValue("number", 2, 5) + await loginPage.generateRandomValue("string", 3, 5);
-        await loginAndAssert(invalidUsername, await loginPage.getPasswordForAll(), loginPage.errorUsernameAndPwdDoNotMAtch);
-    });
-
-    it('Login with empty fields', async () => {
-        await loginAndAssert('', '', loginPage.userNameRequired);
-    });
-
-    it('Login with empty username field', async () => {
-        await loginAndAssert('', await loginPage.getPasswordForAll(), loginPage.userNameRequired);
-    });
-
-    it('Login with empty password field', async () => {
-        await loginAndAssert(await loginPage.getAcceptedUsernameById(0), '', loginPage.pwdRequired);
-    });
-
-    it('Login with locked out user', async () => {
-        await loginAndAssert(await loginPage.getAcceptedUsernameById(1), await loginPage.getPasswordForAll(), loginPage.lockedOutUser);
-    });
-});
-
 describe('Inventory page', () => {
     beforeEach(async () => {
         await loginPage.open()
         await loginPage.verifyLoginPageIsOpened()
         loginPage.login(await loginPage.getAcceptedUsernameById(0), await loginPage.getPasswordForAll())
         await inventoryPage.asssertInventoryPageCartAndItemsAreDisplayed()
+        await resetAppState()
+        await inventoryPage.ensureItemNotInCart(0)
     });
 
     async function assertSideMenuIsDisplayed() {
@@ -72,6 +27,28 @@ describe('Inventory page', () => {
             }
         );
         await inventoryPage.verifySideMenuIsOpen();
+    }
+
+async function closeSideMenu(){
+    await inventoryPage.clickXButton()
+    await browser.waitUntil(
+        async function () {
+            return await (await inventoryPage.allItems).isDisplayed()===false
+        },
+        {
+            timeout: 5000,
+            timeoutMsg:
+            "Expected side menu not to be displayed",
+        }
+    );
+   await inventoryPage.verifySideMenuIsClosed()
+}
+
+    async function resetAppState(){
+        await assertSideMenuIsDisplayed();
+        await inventoryPage.clickResetAppState();
+        await closeSideMenu();
+        
     }
 
     async function loginAndVerifyCart(expectedQuantity, expectedName, expectedDesc, expectedPrice) {
@@ -139,13 +116,14 @@ describe('Inventory page', () => {
     });
 
     it('Footer links', async () => { 
-        inventoryPage.clickTwitterBtn()
+         inventoryPage.clickTwitterBtn()
         await inventoryPage.checkSocialLinkIsOpenedInANewTabAndSwitchToSite("https://x.com/saucelabs")
         inventoryPage.clickFacebookBtn()
         await inventoryPage.checkSocialLinkIsOpenedInANewTabAndSwitchToSite("https://www.facebook.com/saucelabs")
         inventoryPage.clickLinkedInBtn()
-        await inventoryPage.checkSocialLinkIsOpenedInANewTabAndSwitchToSite("https://www.linkedin.com/company/sauce-labs/")
+         await inventoryPage.checkSocialLinkIsOpenedInANewTabAndSwitchToSite("https://www.linkedin.com/company/sauce-labs/") 
     });
+   
 
     it('Valid Checkout', async () => { 
         const expectedPrice = await (await inventoryPage.getItemPriceById(0)).getText()
@@ -246,6 +224,7 @@ describe('Inventory page', () => {
         await assertSideMenuIsDisplayed();
         await inventoryPage.clickResetAppState();
         assert.strictEqual(await inventoryPage.cartItems, undefined);
+        assert.strictEqual(await (await inventoryPage.getItemBtnById(0)).getText(),"Add to cart")
         inventoryPage.asssertInventoryPageCartAndItemsAreDisplayed()
     });
     it('Check the "All items" link in the side menu', async () => { 
@@ -306,113 +285,3 @@ describe('Inventory page', () => {
 });
 
 
-describe('Checkout page', () => {
-    let expectedPrice, expectedDesc, expectedName, expectedQuantity;
-
-    beforeEach(async () => {
-        await loginPage.open();
-        await loginPage.verifyLoginPageIsOpened();
-        await loginPage.login(await loginPage.getAcceptedUsernameById(0), await loginPage.getPasswordForAll());
-        await inventoryPage.asssertInventoryPageCartAndItemsAreDisplayed()
-        
-        expectedPrice = await (await inventoryPage.getItemPriceById(0)).getText();
-        expectedDesc = await (await inventoryPage.getItemDescById(0)).getText();
-        expectedName = await (await inventoryPage.getItemNameById(0)).getText();
-        expectedQuantity = 1;
-        
-        await inventoryPage.getItemBtnById(0).click();
-        await inventoryPage.clickBtnCart();
-        await cartPage.assertCartPageIsDisplayed();
-        await cartPage.clickBtnCheckout();
-
-        await browser.waitUntil(
-            async () => await (await checkoutPage.firstNameInput).isDisplayed(),
-            {
-                timeout: 5000,
-                timeoutMsg: "Expected checkout page to be displayed",
-            }
-        );
-        await checkoutPage.verifyCheckoutMenuOpened();
-    });
-
-    const checkoutTests = [
-        {
-            description: 'with empty fields',
-            firstName: '',
-            lastName: '',
-            postalCode: '',
-            expectedError: checkoutPage.firstNameRequired,
-        },
-        {
-            description: 'with empty first name',
-            firstName: '',
-            lastName: checkoutPage.generateRandomValue('string', 3, 8),
-            postalCode: checkoutPage.generateRandomValue('number', 101, 99999),
-            expectedError: checkoutPage.firstNameRequired,
-        },
-        {
-            description: 'with empty last name',
-            firstName: checkoutPage.generateRandomValue('string', 3, 8),
-            lastName: '',
-            postalCode: checkoutPage.generateRandomValue('number', 101, 99999),
-            expectedError: checkoutPage.lastNameRequired,
-        },
-        {
-            description: 'with empty postal code',
-            firstName: checkoutPage.generateRandomValue('string', 3, 8),
-            lastName: checkoutPage.generateRandomValue('string', 3, 8),
-            postalCode: '',
-            expectedError: checkoutPage.postalCodeRequired,
-        },
-    ];
-
-    checkoutTests.forEach(test => {
-        it(`Continue cart checkout ${test.description}`, async () => {
-            if (test.firstName !== undefined) await (await checkoutPage.firstNameInput).setValue(test.firstName);
-            if (test.lastName !== undefined) await (await checkoutPage.lastNameInput).setValue(test.lastName);
-            if (test.postalCode !== undefined) await (await checkoutPage.postalCodeInput).setValue(test.postalCode);
-
-            assert.strictEqual(await (await checkoutPage.firstNameInput).getAttribute('value'), test.firstName);
-            assert.strictEqual(await (await checkoutPage.lastNameInput).getAttribute('value'), test.lastName);
-            assert.strictEqual(await (await checkoutPage.postalCodeInput).getAttribute('value'), test.postalCode.toString());
-
-            await checkoutPage.clickContinue();
-            checkoutPage.assertInvalidCheckout(test.expectedError)
-        });
-    });
-
-    it('Check "Cancel" button in the checkout page', async () => { 
-        checkoutPage.clickCancel()
-        await cartPage.assertCartPageIsDisplayed()
-        assert.strictEqual((await cartPage.cartItems.length), expectedQuantity)
-        assert.strictEqual(await (await cartPage.getItemNameById(0)).isDisplayed(), true)
-        assert.strictEqual(await (await cartPage.getItemNameById(0)).getText(), expectedName)
-        assert.strictEqual(await (await cartPage.getItemDescById(0)).isDisplayed(), true)
-        assert.strictEqual(await (await cartPage.getItemDescById(0)).getText(), expectedDesc)
-        assert.strictEqual(await (await cartPage.getItemPriceById(0)).isDisplayed(), true)
-        assert.strictEqual(await(await cartPage.getItemPriceById(0)).getText(), expectedPrice)
-        assert.strictEqual(await(await cartPage.getItemQuantityById(0)).isDisplayed(), true)
-        assert.strictEqual(parseInt(await(await cartPage.getItemQuantityById(0)).getText()), expectedQuantity)
-    });
-
-    it('Check "Cancel" button in the overview page', async () => { 
-        await (await checkoutPage.firstNameInput).setValue(checkoutTests[3].firstName);
-        await (await checkoutPage.lastNameInput).setValue(checkoutTests[3].lastName);
-        await (await checkoutPage.postalCodeInput).setValue(checkoutTests[2].postalCode);
-        await checkoutPage.clickContinue()
-        await browser.waitUntil(
-            async function () {
-                return await (await overviewPage.paymentInfoLabel).isDisplayed()
-            },
-            {
-                timeout: 5000,
-                timeoutMsg:
-                "Expected overview page to be displayed",
-            }
-        );
-        await overviewPage.assertOverviewPageIsDisplayed()
-        overviewPage.clickBtnCancel()
-        await inventoryPage.asssertInventoryPageCartAndItemsAreDisplayed()
-        assert.strictEqual(parseInt(await (await inventoryPage.itemsInCartBadge).getText()), expectedQuantity)
-    });
-});

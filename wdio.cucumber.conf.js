@@ -18,7 +18,7 @@ exports.config = {
   framework: "cucumber",
   reporters: ["spec"],
   cucumberOpts: {
-    require: ["./test/step-definitions/*.js"],
+    require: ["./test/features/step-definitions/*.js"],
     backtrace: false,
     requireModule: [],
     dryRun: false,

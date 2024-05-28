@@ -1,5 +1,5 @@
 const { Given, When, Then } = require("@wdio/cucumber-framework");
-const loginPage = require("../pageobjects/login.page");
+const loginPage = require("../../pageobjects/login.page");
 
 Given("User is located on the main page of the saucedemo website", async () => {
   await loginPage.open();
